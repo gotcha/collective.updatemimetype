@@ -1,1 +1,1 @@
-- Godefroid Chapelle, gotcha@bubblenet.be
+- Godefroid Chapelle, gotcha@bubblenet.be, funded by KULeuven
