@@ -55,33 +55,41 @@ class UpdateMimetypes(object):
 
     def migrate(self):
         obj = self.obj
+        mtr = getToolByName(obj, 'mimetypes_registry')
         for field in obj.Schema().fields():
             if isinstance(field, BlobField):
-                update_mimetype(field, obj)
+                update_mimetype(field, obj, mtr)
 
 
-def update_mimetype(field, obj):
+def update_mimetype(field, obj, mtr):
     blobwrapper = field.get(obj)
-    file = blobwrapper.getBlob().open()
-    mtr = getToolByName(obj, 'mimetypes_registry', None)
-    if mtr is not None:
-        body = file.read()
-        filename = blobwrapper.getFilename()
-        old_mime = blobwrapper.getContentType()
-        LOG.info(old_mime)
-        kw = {'mimetype': None,
-              'filename': filename}
-        # this may split the encoded file inside a multibyte character
-        try:
-            d, f, mimetype = mtr(body[:8096], **kw)
-        except UnicodeDecodeError:
-            d, f, mimetype = mtr(len(body) < 8096 and body or '', **kw)
+    try:
+        blob = blobwrapper.getBlob()
+        file = blob.open()
+    except:
+        LOG.exception(
+            'Cannot get or open blob from field "%s" of %s',
+            field.getName(), obj.absolute_url()
+            )
+        return
+    body = file.read()
+    filename = blobwrapper.getFilename()
+    old_mime = blobwrapper.getContentType()
+    LOG.debug(old_mime)
+    kw = {'mimetype': None,
+          'filename': filename}
+    # this may split the encoded file inside a multibyte character
+    try:
+        d, f, mimetype = mtr(body[:8096], **kw)
+    except UnicodeDecodeError:
+        d, f, mimetype = mtr(len(body) < 8096 and body or '', **kw)
 
-        if mimetype != old_mime:
-            LOG.info(
-                'update field %s from %s', field.getName(),
-                obj.absolute_url())
-            blobwrapper.setContentType(mimetype)
+    if mimetype != old_mime:
+        LOG.info(
+            'update mime_type (%s) of field "%s" of %s', mimetype,
+            field.getName(),
+            obj.absolute_url())
+        blobwrapper.setContentType(mimetype)
 
 
 def migrate(portal, query={}):
