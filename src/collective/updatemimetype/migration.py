@@ -1,0 +1,83 @@
+import logging
+
+from plone.app.blob.field import BlobField
+from Products.CMFCore.utils import getToolByName
+
+from Products.contentmigration.basemigrator.walker import Walker
+from Products.contentmigration.common import HAS_LINGUA_PLONE
+
+LOG = logging.getLogger('collective.updatemimetype')
+
+
+class AllCatalogWalker(Walker):
+
+    def walk(self):
+        catalog = self.catalog
+        query = {}
+
+        if HAS_LINGUA_PLONE and 'Language' in catalog.indexes():
+            query['Language'] = 'all'
+
+        brains = catalog(query)
+
+        for brain in brains:
+            try:
+                obj = brain.getObject()
+            except AttributeError:
+                LOG.error("Couldn't access %s" % brain.getPath())
+                continue
+            try:
+                state = obj._p_changed
+            except:
+                state = 0
+            if obj is not None:
+                yield obj
+                # safe my butt
+                if state is None:
+                    obj._p_deactivate()
+
+
+class UpdateMimetypes(object):
+
+    src_portal_type = None
+    dst_portal_type = None
+    src_meta_type = None
+    dst_meta_type = None
+
+    def __init__(self, obj, src_portal_type, dst_portal_type):
+        self.obj = obj
+
+    def migrate(self):
+        obj = self.obj
+        for field in obj.Schema().fields():
+            if isinstance(field, BlobField):
+                update_mimetype(field, obj)
+
+
+def update_mimetype(field, obj):
+    blobwrapper = field.get(obj)
+    file = blobwrapper.getBlob().open()
+    mtr = getToolByName(obj, 'mimetypes_registry', None)
+    if mtr is not None:
+        body = file.read()
+        filename = blobwrapper.getFilename()
+        old_mime = blobwrapper.getContentType()
+        LOG.info(old_mime)
+        kw = {'mimetype': None,
+              'filename': filename}
+        # this may split the encoded file inside a multibyte character
+        try:
+            d, f, mimetype = mtr(body[:8096], **kw)
+        except UnicodeDecodeError:
+            d, f, mimetype = mtr(len(body) < 8096 and body or '', **kw)
+
+        if mimetype != old_mime:
+            LOG.info(
+                'update field %s from %s', field.getName(),
+                obj.absolute_url())
+            blobwrapper.setContentType(mimetype)
+
+
+def migrate(portal):
+    walker = AllCatalogWalker(portal, UpdateMimetypes)
+    walker()
