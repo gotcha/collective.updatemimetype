@@ -74,16 +74,14 @@ def update_mimetype(field, obj, mtr):
         return
     body = file.read()
     filename = blobwrapper.getFilename()
-    if filename is None:
-        filename = ''
+    if not body:
+        LOG.info(
+            'Skip field "%s" of %s because it has no content',
+            field.getName(),
+            obj.absolute_url())
+        return
     old_mime = blobwrapper.getContentType()
     LOG.debug('Filename "%s" Mimetype "%s"', filename, old_mime)
-    #if filename is None:
-    #    LOG.info(
-    #        'Skip field "%s" of %s because its filename is None',
-    #        field.getName(),
-    #        obj.absolute_url())
-    #    return
     kw = {'mimetype': None,
           'filename': filename}
     # this may split the encoded file inside a multibyte character
@@ -96,8 +94,15 @@ def update_mimetype(field, obj, mtr):
         LOG.info(
             'Update to new mime_type (%s) of field "%s" of %s', mimetype,
             field.getName(),
-            obj.absolute_url())
+            obj.absolute_url()
+            )
         blobwrapper.setContentType(mimetype)
+    else:
+        LOG.debug(
+            'Do not update field "%s" of %s',
+            field.getName(),
+            obj.absolute_url()
+            )
 
 
 def migrate(portal, query={}):
