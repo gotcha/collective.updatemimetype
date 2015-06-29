@@ -74,14 +74,16 @@ def update_mimetype(field, obj, mtr):
         return
     body = file.read()
     filename = blobwrapper.getFilename()
+    if filename is None:
+        filename = ''
     old_mime = blobwrapper.getContentType()
     LOG.debug('Filename "%s" Mimetype "%s"', filename, old_mime)
-    if filename is None:
-        LOG.info(
-            'Skip field "%s" of %s because its filename is None',
-            field.getName(),
-            obj.absolute_url())
-        return
+    #if filename is None:
+    #    LOG.info(
+    #        'Skip field "%s" of %s because its filename is None',
+    #        field.getName(),
+    #        obj.absolute_url())
+    #    return
     kw = {'mimetype': None,
           'filename': filename}
     # this may split the encoded file inside a multibyte character
