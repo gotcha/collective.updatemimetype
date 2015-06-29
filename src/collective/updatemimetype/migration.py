@@ -11,9 +11,15 @@ LOG = logging.getLogger('collective.updatemimetype')
 
 class AllCatalogWalker(Walker):
 
+    def __init__(self, portal, migrator, src_portal_type=None,
+                 dst_portal_type=None, **kwargs):
+        super(AllCatalogWalker, self).__init__(portal, migrator)
+        self.query = kwargs.get('query', {})
+
     def walk(self):
+        query = self.query
+
         catalog = self.catalog
-        query = {}
 
         if HAS_LINGUA_PLONE and 'Language' in catalog.indexes():
             query['Language'] = 'all'
@@ -78,6 +84,6 @@ def update_mimetype(field, obj):
             blobwrapper.setContentType(mimetype)
 
 
-def migrate(portal):
-    walker = AllCatalogWalker(portal, UpdateMimetypes)
+def migrate(portal, query={}):
+    walker = AllCatalogWalker(portal, UpdateMimetypes, query=query)
     walker()

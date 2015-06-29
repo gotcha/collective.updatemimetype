@@ -5,5 +5,6 @@ from collective.updatemimetype.migration import migrate
 class MigrateView(BrowserView):
 
     def __call__(self):
-        migrate(self.context)
+        query = self.request.form.get('query', {})
+        migrate(self.context, query=query)
         return 'migrated'
