@@ -7,7 +7,6 @@ install:
   - bin/buildout -Nc travis.cfg
 script:
   - bin/test
-  - coveralls
 
 notifications:
   email:
