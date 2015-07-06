@@ -31,8 +31,24 @@ It can be called from a GenericSetup upgrade step with::
     The update can demand a lot of memory and take a long time if your portal holds
     a lot of content.
 
+If you want to limit migration to specific content items, you can pass a ``query``
+argument to the ``migrate`` function. For instance, while the code above updates both ``File``
+and ``Image`` content items of a default Plone site, the code below would
+only update ``File`` content items::
+
+    from collective.updatemimetype import migrate
+
+    catalog_query = {'portal_type': 'File'}
+
+    migrate(portal, catalog_query)
+
 
 There is also a view registered on the portal. Call it with::
 
     http://my_domain/my_portal/updatemimetype
+
+The view can also be called with a ``query`` parameter. To limit update to
+``File`` items, call the view with::
+
+    http://my_domain/my_portal/updatemimetype?query.portal_type:record:string=File
 

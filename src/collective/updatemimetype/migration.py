@@ -24,7 +24,7 @@ class AllCatalogWalker(Walker):
         if HAS_LINGUA_PLONE and 'Language' in catalog.indexes():
             query['Language'] = 'all'
 
-        brains = catalog(query)
+        brains = catalog(**query)
 
         for brain in brains:
             try:
