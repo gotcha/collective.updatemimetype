@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.1.2 (unreleased)
+0.1.2 (2015-07-06)
 ------------------
 
 - Fix limiting update to the results of a catalog query.
